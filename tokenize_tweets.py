@@ -3,7 +3,10 @@ from transformers import AutoTokenizer, AutoModel
 import pandas as pd
 import numpy as np
 
-text_df = pd.read_parquet('data/revised_data.parquet')
+bot_df = pd.read_parquet('data/revised_bot_data.parquet')
+human_df = pd.read_parquet('data/revised_user_data.parquet')
+
+text_df = pd.concat([bot_df, human_df], ignore_index=True)
 
 text_df.head()
 
@@ -50,7 +53,7 @@ def embed_user_tweets(row):
             tweets.append(txt)
     if not tweets:
         # 0 vector
-        return np.zeros(model.config.hidden_size, dtype=float)
+        return np.zeros(model.config.hidden_size, dtype=np.float32)
 
     tweet_embs = embed_texts(tweets)
 
@@ -58,6 +61,13 @@ def embed_user_tweets(row):
     return tweet_embs.mean(axis=0)
 
 user_vectors = text_df.apply(embed_user_tweets, axis = 1)
-user_vectors.head()
 
-user_vectors.to_parquet('/lustre/isaac/scratch/jdosch1/COSC325_Final')
+print(f"user_vectors.type: {type(user_vectors)}")
+print("user_vectors.head():")
+
+user_vectors = pd.DataFrame(user_vectors)
+
+print(user_vectors.head())
+
+print("="*25, "Converting to parquet", "="*25)
+user_vectors.to_parquet('/lustre/isaac/scratch/jdosch1/COSC325_Final/tweet_vectors.parquet')
