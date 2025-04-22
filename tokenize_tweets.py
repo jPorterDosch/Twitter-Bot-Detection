@@ -60,14 +60,12 @@ def embed_user_tweets(row):
     # Average tweet values
     return tweet_embs.mean(axis=0)
 
-user_vectors = text_df.apply(embed_user_tweets, axis = 1)
+text_df['tweet_vectors'] = text_df.apply(embed_user_tweets, axis = 1)
 
-print(f"user_vectors.type: {type(user_vectors)}")
+print(f"user_vectors.type: {type(text_df['tweet_vectors'])}")
 print("user_vectors.head():")
 
-user_vectors = pd.DataFrame(user_vectors)
-
-print(user_vectors.head())
+print(text_df.head())
 
 print("="*25, "Converting to parquet", "="*25)
-user_vectors.to_parquet('/lustre/isaac/scratch/jdosch1/COSC325_Final/tweet_vectors.parquet')
+text_df.to_parquet('/home/jdosch1/personal/COSC325_Final/data/tweet_vectors.parquet')
