@@ -6,17 +6,17 @@ class ResNet_Block(torch.nn.Module):
 
         # Note: conv1d expects inputs of shape (batch_size, channels, length)
         # So in our case (batch_size, 1, len(datapoint))
-        self.conv1 = torch.nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=stride)
+        self.conv1 = torch.nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=3, stride=stride, padding=1)
         self.bn1 = torch.nn.BatchNorm1d(num_features=out_channels)
         self.relu = torch.nn.ReLU()
 
-        self.conv2 = torch.nn.Conv1d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=stride)
+        self.conv2 = torch.nn.Conv1d(in_channels=out_channels, out_channels=out_channels, kernel_size=3, stride=stride, padding=1)
         self.bn2 = torch.nn.BatchNorm1d(num_features=out_channels)
 
-        self.conv3 = torch.nn.Conv1d(in_channels=out_channels, out_channels=in_channels, kernel_size=3, stride=stride)
+        self.conv3 = torch.nn.Conv1d(in_channels=out_channels, out_channels=in_channels, kernel_size=3, stride=stride, padding=1)
         self.bn3 = torch.nn.BatchNorm1d(num_features=in_channels)
 
-        self.conv4 = torch.nn.Conv1d(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=stride)
+        self.conv4 = torch.nn.Conv1d(in_channels=in_channels, out_channels=in_channels, kernel_size=3, stride=stride, padding=1)
         self.bn4 = torch.nn.BatchNorm1d(num_features=in_channels)
 
         # Downsample if an odd stride shape causes mismatch in shapes that would prevent skip connection addition
@@ -50,21 +50,22 @@ class ResNet_Block(torch.nn.Module):
 
         return x
 
-# RGA Deep Neural Network - ResNet block, BiGRU block, attention layer, inference layer
-class RGA(torch.nn.Module):
+# Deep Neural Network - ResNet block, BiGRU block, attention layer, inference layer in the paper
+# We'll start with just ResNet depending on time constraints
+class DNN(torch.nn.Module):
     def __init__(self):
-        super(RGA, self).__init__()
+        super(DNN, self).__init__()
         self.num_classes = 2
         self.input_channels = 1
         self.output_channels = 4
 
         # ResNet
-        self.conv = torch.nn.Conv1d(in_channels=self.input_channels, out_channels=self.input_channels, kernel_size=3, stride=1)
-        self.bn = torch.nn.BatchNorm1d(num_features=self.output_channels)
+        self.conv = torch.nn.Conv1d(in_channels=self.input_channels, out_channels=self.input_channels, kernel_size=3, stride=1, padding=1)
+        self.bn = torch.nn.BatchNorm1d(num_features=self.input_channels)
         self.relu = torch.nn.ReLU()
         self.maxpool = torch.nn.MaxPool1d(kernel_size=2, stride=2)
 
-        self.res_block1 = ResNet_Block(self.output_channels, self.output_channels, stride=1)
+        self.res_block1 = ResNet_Block(self.input_channels, self.output_channels, stride=1)
         self.res_block2 = ResNet_Block(self.output_channels, self.output_channels, stride=1)
         self.res_block3 = ResNet_Block(self.output_channels, self.output_channels, stride=1)
 
