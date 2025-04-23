@@ -63,11 +63,12 @@ class ResNet_Block(torch.nn.Module):
 # Deep Neural Network - ResNet block, BiGRU block, attention layer, inference layer in the paper
 # We'll start with just ResNet depending on time constraints
 class DNN(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, num_scalar_features, output_channels: int = 16):
         super(DNN, self).__init__()
         self.num_classes = 2
-        self.input_channels = 1
-        self.output_channels = 16
+        self.input_channels = 3
+        self.output_channels = output_channels
+        self.num_scalar_features = num_scalar_features
 
         # ResNet
         self.conv = torch.nn.Conv1d(in_channels=self.input_channels, out_channels=self.input_channels, kernel_size=3, stride=1, padding=1)
@@ -80,9 +81,9 @@ class DNN(torch.nn.Module):
         self.res_block3 = ResNet_Block(self.output_channels, self.output_channels, stride=1)
 
         self.avgpool = torch.nn.AdaptiveAvgPool1d(1)
-        self.fc = torch.nn.Linear(self.output_channels, self.num_classes)
+        self.fc = torch.nn.Linear(self.output_channels + self.num_scalar_features, self.num_classes)
 
-    def forward(self, x):
+    def forward(self, x, scalar_features):
         x = self.conv(x)
         x = self.bn(x)
         x = self.relu(x)
@@ -94,5 +95,7 @@ class DNN(torch.nn.Module):
 
         x = self.avgpool(x)
         x = x.squeeze(-1)
+
+        x = torch.cat([x, scalar_features.float()], dim=1)
         x = self.fc(x)
         return x       
