@@ -1,18 +1,5 @@
 import torch
 
-class SimpleMLP(torch.nn.Module):
-    def __init__(self, length):
-        super().__init__()
-        self.net = torch.nn.Sequential(
-            torch.nn.Flatten(),
-            torch.nn.Linear(length, 32),
-            torch.nn.ReLU(),
-            torch.nn.Linear(32, 2)
-        )
-    def forward(self, x):
-        return self.net(x)
-
-
 class ResNet_Block(torch.nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         super(ResNet_Block, self).__init__()
@@ -71,17 +58,18 @@ class DNN(torch.nn.Module):
         self.num_scalar_features = num_scalar_features
 
         # ResNet
+        # Layers inspired by: https://medium.com/@siddheshb008/resnet-architecture-explained-47309ea9283d
         self.conv = torch.nn.Conv1d(in_channels=self.input_channels, out_channels=self.input_channels, kernel_size=3, stride=1, padding=1)
         self.bn = torch.nn.BatchNorm1d(num_features=self.input_channels)
         self.relu = torch.nn.ReLU()
         self.maxpool = torch.nn.MaxPool1d(kernel_size=2, stride=2)
 
         self.res_block1 = ResNet_Block(self.input_channels, self.output_channels, stride=1)
-        self.res_block2 = ResNet_Block(self.output_channels, self.output_channels, stride=1)
-        self.res_block3 = ResNet_Block(self.output_channels, self.output_channels, stride=1)
+        self.res_block2 = ResNet_Block(self.output_channels, self.output_channels*2, stride=1)
+        self.res_block3 = ResNet_Block(self.output_channels*2, self.output_channels*4, stride=1)
 
         self.avgpool = torch.nn.AdaptiveAvgPool1d(1)
-        self.fc = torch.nn.Linear(self.output_channels + self.num_scalar_features, self.num_classes)
+        self.fc = torch.nn.Linear(self.output_channels*4 + self.num_scalar_features, self.num_classes)
 
     def forward(self, x, scalar_features):
         x = self.conv(x)
